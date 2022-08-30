@@ -1,0 +1,176 @@
+---
+title: "Visualizations for Google Portfolio Project 1"
+author: "George R. Yang"
+date: "2022-08-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary
+
+For the Google UX Design course, I designed a music streaming tracker app that included some placeholder visualizations showing the total number of streams of unique listeners over time. This test code attempts to recreate the visualizations that were originally created in Figma using some made-up data.
+
+
+## Load Packages
+``` {r load_packages}
+library(tidyverse)
+library(readxl)
+library(ggchicklet)
+library(showtext)
+```
+
+## Load and Clean Data
+```{r load_data}
+# Load data
+song_data <- read_excel("song_data.xlsx", sheet = 1)
+
+# Clean data
+
+## All streaming data
+song_streams <- song_data %>%
+  select(streams_202201:streams_202208) %>%
+  summarize(
+    Jan = sum(streams_202201),
+    Feb = sum(streams_202202),
+    Mar = sum(streams_202203),
+    Apr = sum(streams_202204),
+    May = sum(streams_202205),
+    Jun = sum(streams_202206),
+    Jul = sum(streams_202207),
+    Aug = sum(streams_202208)
+  ) %>%
+  pivot_longer(everything(), names_to = "time", values_to = "streams") %>%
+  mutate(time = fct_relevel(time,  c(
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"
+  ))) 
+
+## 火 streaming data
+huo_streams <- song_data %>%
+  filter(song == "火") %>%
+  select(streams_202201:streams_202208) %>%
+  rename(
+    Jan = streams_202201,
+    Feb = streams_202202,
+    Mar = streams_202203,
+    Apr = streams_202204,
+    May = streams_202205,
+    Jun = streams_202206,
+    Jul = streams_202207,
+    Aug = streams_202208
+  ) %>%
+  pivot_longer(everything(), names_to = "time", values_to = "streams") %>%
+  mutate(time = fct_relevel(time,  c(
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"
+  )))
+
+## 火 listener data
+huo_listeners <- song_data %>%
+  filter(song == "火") %>%
+  select(listeners_202201:listeners_202208) %>%
+  rename(
+    Jan = listeners_202201,
+    Feb = listeners_202202,
+    Mar = listeners_202203,
+    Apr = listeners_202204,
+    May = listeners_202205,
+    Jun = listeners_202206,
+    Jul = listeners_202207,
+    Aug = listeners_202208
+  ) %>%
+  pivot_longer(everything(), names_to = "time", values_to = "listeners") %>%
+  mutate(time = fct_relevel(time,  c(
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"
+  )))
+
+```
+
+## Load Font
+``` {r}
+# Might not be working
+
+font_add_google("Open Sans", "Open Sans")
+showtext_auto()
+```
+
+## Create Summary Plot on Home Screen
+
+```{r create_summary_plot}
+# Create ggplot
+song_sum_plot <- song_streams %>%
+  ggplot(aes(time, streams)) +
+  geom_chicklet(radius = unit(3, "mm"), fill = "#B56576") +
+  labs(title = paste0(last(song_streams$streams) / 1000, "k"),
+       subtitle = "streams") +
+  theme_void() +
+  theme(
+    axis.text.x = element_text(color = "#355070", size = 14),
+    panel.background = element_rect(fill = "#F0F0F0", color = "#F0F0F0"),
+    plot.background = element_rect(fill = "#F0F0F0", color = "#F0F0F0"),
+    plot.margin = margin(1, 1, 1, 1, "cm"),
+    plot.title = element_text(
+      face = "bold",
+      color = "#355070",
+      size = 32,
+      hjust = 0,
+      vjust = -3
+    ),
+    plot.subtitle = element_text(
+      color = "#355070",
+      size = 16,
+      hjust = 0,
+      vjust = -5
+    )
+  )
+
+# Show plot
+song_sum_plot
+```
+
+## Create Streams and Listeners Plots on Song Details Screen for Most Recent Song
+
+### Streams Plot for Most Recent Song
+```{r create_streams_plot}
+# Create streams plot
+huo_streams_plot <- huo_streams %>%
+  ggplot(aes(time, streams)) +
+  geom_chicklet(radius = unit(3, "mm"), fill = "#B56576") +
+  theme_void() +
+  theme(
+    axis.text.x = element_text(color = "#355070", size = 14),
+    panel.background = element_rect(fill = "#F0F0F0", color = "#F0F0F0"),
+    plot.background = element_rect(fill = "#F0F0F0", color = "#F0F0F0"),
+    plot.margin = margin(1, 1, 1, 1, "cm"),
+   )
+
+# Show streams plot
+huo_streams_plot
+```
+
+### Listeners Plot for Most Recent Song
+```{r create_listeners_plot}
+# Create listeners plot
+huo_listeners_plot <- huo_listeners %>%
+  ggplot(aes(time, listeners)) +
+  geom_chicklet(radius = unit(3, "mm"), fill = "#6D597A") +
+  theme_void() +
+  theme(
+    axis.text.x = element_text(color = "#355070", size = 14),
+    panel.background = element_rect(fill = "#F0F0F0", color = "#F0F0F0"),
+    plot.background = element_rect(fill = "#F0F0F0", color = "#F0F0F0"),
+    plot.margin = margin(1, 1, 1, 1, "cm"),
+   )
+
+# Show listeners  plot
+huo_listeners_plot
+```
+
+## Save Plots as Images
+
+```{r save_plots}
+ggsave(song_sum_plot, file = "01_song_sum_plot.png")
+ggsave(huo_streams_plot, file = "02_huo_streams_plot.png")
+ggsave(huo_listeners_plot, file = "03_huo_listeners_plot.png")
+```
